@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real-Time Chat</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+    <!-- Loading Page -->
+    <div id="loading-overlay">
+        <div class="loader"></div>
+        <p>Loading...</p>
+    </div>
+
+    <!-- User Selection Modal -->
+    <div id="user-selection-modal">
+        <h2>Select User</h2>
+        <button id="select-user1">User 1</button>
+        <button id="select-user2">User 2</button>
+    </div>
+
+    <!-- User Profile Section -->
+    <div id="profile-container">
+        <div class="user-icon"></div>
+        <div class="user-details">
+            <h2 id="user-heading">Real-Time Chat</h2>
+            <p>Online</p>
+        </div>
+    </div>
+
+    <!-- Wave Animation -->
+    <div class="wave-wrapper">
+        <div class="wave"></div>
+        <div class="wave"></div>
+        <div class="wave"></div>
+    </div>
+
+    <!-- Bubble Animation -->
+    <div id="bubble-container"></div>
+
+    <!-- Chat Container -->
+    <div id="chat-container" style="display:none;">
+        <ul id="messages"></ul>
+        <form id="form" action="">
+            <input id="input" autocomplete="off" placeholder="Type a message..." />
+            <button id="send-btn">Send</button>
+        </form>
+    </div>
+
+    <!-- Loading animation for message sending -->
+    <div id="message-loading">
+        <div class="message-loader"></div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const socket = io();
+            const form = document.getElementById('form');
+            const input = document.getElementById('input');
+            const messages = document.getElementById('messages');
+            const userHeading = document.getElementById('user-heading');
+            const messageLoading = document.getElementById('message-loading');
+            const loadingOverlay = document.getElementById('loading-overlay');
+            const chatContainer = document.getElementById('chat-container');
+            const userSelectionModal = document.getElementById('user-selection-modal');
+            let userId;
+
+            // Simulate Loading Screen on Page Load
+            window.addEventListener('load', function () {
+                loadingOverlay.style.display = 'block';
+                setTimeout(() => {
+                    loadingOverlay.style.display = 'none'; // Hide after 3 seconds
+                    userSelectionModal.style.display = 'flex'; // Show user selection modal
+                }, 3000);
+            });
+
+            // User selection logic
+            document.getElementById('select-user1').addEventListener('click', () => {
+                userId = '1';
+                userHeading.textContent = 'User 1';
+                userSelectionModal.style.display = 'none';
+                chatContainer.style.display = 'block';
+            });
+
+            document.getElementById('select-user2').addEventListener('click', () => {
+                userId = '2';
+                userHeading.textContent = 'User 2';
+                userSelectionModal.style.display = 'none';
+                chatContainer.style.display = 'block';
+            });
+
+            form.addEventListener('submit', function (event) {
+                event.preventDefault();
+                if (input.value) {
+                    const messageData = {
+                        userId: userId,
+                        message: input.value
+                    };
+
+                    // Show waiting animation during message sending
+                    messageLoading.style.display = 'block'; // Show loading animation
+
+                    setTimeout(() => {
+                        messageLoading.style.display = 'none'; // Hide animation after sending
+                        socket.emit('chat message', messageData);
+                        input.value = '';
+                    }, 1500); // Simulate delay before sending message
+                }
+            });
+
+            socket.on('chat message', function (data) {
+                const item = document.createElement('li');
+                item.classList.add('message-item');
+
+                // Create user icon
+                const userIcon = document.createElement('div');
+                userIcon.classList.add('user-icon');
+                if (data.userId === '1') {
+                    userIcon.classList.add('user1-icon');
+                } else if (data.userId === '2') {
+                    userIcon.classList.add('user2-icon');
+                }
+
+                // Create message content
+                const messageContent = document.createElement('div');
+                messageContent.classList.add('message-content');
+                messageContent.textContent = data.message;
+
+                // Append user icon and message content to the list item
+                item.appendChild(userIcon);
+                item.appendChild(messageContent);
+
+                messages.appendChild(item);
+                window.scrollTo(0, document.body.scrollHeight);
+            });
+        });
+    </script>
+</body>
+
+</html>
